@@ -1,0 +1,596 @@
+:root {
+  --bg: var(--vscode-editor-background, #1e1e1e);
+  --fg: var(--vscode-editor-foreground, #d4d4d4);
+  --border: var(--vscode-panel-border, #3e3e3e);
+  --accent: var(--vscode-button-background, #0078d4);
+  --accent-fg: var(--vscode-button-foreground, #fff);
+  --accent-hover: var(--vscode-button-hoverBackground, #026ec1);
+  --input-bg: var(--vscode-input-background, #3c3c3c);
+  --input-border: var(--vscode-input-border, #555);
+  --error: var(--vscode-errorForeground, #f48771);
+  --sidebar-bg: var(--vscode-sideBar-background, #252526);
+  --sidebar-fg: var(--vscode-sideBar-foreground, #ccc);
+  --status-bg: var(--vscode-statusBar-background, #007acc);
+  --status-fg: var(--vscode-statusBar-foreground, #fff);
+  --tool-bg: rgba(255, 255, 255, 0.03);
+  --tool-color: #e5c07b;
+  --think-color: #c678dd;
+  --user-color: #61afef;
+  /* Code highlighting */
+  --code-bg: var(--vscode-textCodeBlock-background, rgba(255,255,255,0.05));
+  --code-fg: var(--vscode-textPreformat-foreground, #d4d4d4);
+}
+
+/* VS Code dark/light theme follows via CSS variables above */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--vscode-editor-font-family, 'Segoe UI', sans-serif);
+  font-size: var(--vscode-editor-font-size, 13px);
+  background: var(--bg);
+  color: var(--fg);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root { height: 100%; }
+
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* ─── Sidebar ──────────────────────────────────── */
+
+.sidebar {
+  width: 220px;
+  min-width: 180px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.sidebar-item {
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.sidebar-item:hover { background: rgba(255,255,255,0.05); }
+.sidebar-item.active { background: rgba(255,255,255,0.1); }
+
+.sidebar-item-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.sidebar-item-meta {
+  opacity: 0.5;
+  font-size: 10px;
+}
+
+.sidebar-item-delete {
+  visibility: hidden;
+  background: none;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.sidebar-item:hover .sidebar-item-delete { visibility: visible; }
+.sidebar-item-delete:hover { background: rgba(244, 135, 113, 0.2); }
+
+.sidebar-empty {
+  padding: 16px;
+  text-align: center;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+/* ─── Main Area ───────────────────────────────── */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Status Bar ──────────────────────────────── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--status-bg);
+  color: var(--status-fg);
+  font-size: 11px;
+  min-height: 24px;
+}
+
+.status-right { opacity: 0.7; }
+
+/* ─── Empty State ─────────────────────────────── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0.7;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  font-weight: 300;
+}
+
+/* ─── Message List ────────────────────────────── */
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.message {
+  padding: 6px 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+}
+
+.message.user {
+  color: var(--user-color);
+  padding: 8px;
+  background: rgba(97, 175, 239, 0.05);
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+.message.assistant {
+  padding: 8px 0;
+}
+
+.message.assistant.streaming .cursor {
+  animation: blink 1s infinite;
+  color: var(--accent);
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.message.thinking {
+  color: var(--think-color);
+  font-style: italic;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(198, 120, 221, 0.05);
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.message.thinking summary {
+  cursor: pointer;
+  font-style: normal;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.message.tool {
+  color: var(--tool-color);
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--tool-bg);
+  border-radius: 4px;
+  margin: 4px 0;
+  border-left: 3px solid var(--tool-color);
+}
+
+.tool-icon { margin-right: 6px; }
+
+.tool-preview, .tool-input {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.2);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.message.tool-result {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-left: 3px solid #98c379;
+  margin: 4px 0;
+}
+
+.message.tool-result.error {
+  border-left-color: var(--error);
+  color: var(--error);
+}
+
+.message.tool-result pre {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.8;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.message.error {
+  background: rgba(244, 135, 113, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid var(--error);
+  margin: 8px 0;
+}
+
+.message.system {
+  color: var(--vscode-descriptionForeground, #888);
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.message.permission {
+  background: rgba(229, 192, 123, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid var(--tool-color);
+}
+
+.message.permission .desc {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* ─── Input ─────────────────────────────────────  */
+
+.chat-input-bar {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+}
+
+.input-error {
+  color: var(--error);
+  font-size: 11px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background: rgba(244, 135, 113, 0.1);
+  border-radius: 4px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: inherit;
+  resize: none;
+  outline: none;
+}
+
+.chat-input:focus {
+  border-color: var(--accent);
+}
+
+.chat-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.btn-send, .btn-stop, .btn-new, .btn-primary, .btn-allow, .btn-deny {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.btn-send, .btn-primary, .btn-allow {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.btn-send:hover, .btn-primary:hover, .btn-allow:hover {
+  background: var(--accent-hover);
+}
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-stop {
+  background: var(--error);
+  color: #fff;
+}
+
+.btn-new {
+  background: none;
+  color: var(--fg);
+  font-size: 18px;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.btn-new:hover { background: rgba(255,255,255,0.1); }
+
+.btn-deny {
+  background: rgba(255,255,255,0.1);
+  color: var(--fg);
+}
+.btn-deny:hover { background: rgba(255,255,255,0.2); }
+
+/* ─── Permission Dialog ───────────────────────── */
+.permission-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.permission-dialog {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.permission-dialog h3 {
+  margin-bottom: 12px;
+  color: var(--tool-color);
+}
+
+.permission-tool {
+  margin-bottom: 8px;
+}
+
+.permission-desc {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+.permission-input {
+  font-family: monospace;
+  font-size: 11px;
+  background: var(--input-bg);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ─── Settings Bar ───────────────────────────── */
+.settings-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--vscode-toolbar-activeBackground, rgba(255,255,255,0.03));
+  font-size: 11px;
+  min-height: 28px;
+}
+
+.settings-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.settings-label {
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.settings-select {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-spacer {
+  flex: 1;
+}
+
+.token-usage {
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Code blocks ─────────────────────────────── */
+
+.message pre, .message code {
+  font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
+  font-size: 12px;
+}
+
+.message pre {
+  background: var(--code-bg);
+  padding: 8px 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 4px 0;
+}
+
+.message code {
+  background: var(--code-bg);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.message pre code {
+  background: none;
+  padding: 0;
+}
+
+/* ─── Inline diff ─────────────────────────────── */
+.diff-open-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  border-radius: 2px;
+}
+.diff-open-btn:hover {
+  background: rgba(0, 120, 212, 0.1);
+}
+
+/* ─── Slash commands ──────────────────────────── */
+.slash-suggestions {
+  background: var(--vscode-dropdown-background, var(--input-bg));
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.slash-item {
+  display: flex;
+  gap: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.slash-item:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.slash-cmd {
+  font-weight: 600;
+  min-width: 80px;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.slash-desc {
+  opacity: 0.7;
+}
+
+.lang-toggle {
+  background: none;
+  border: 1px solid var(--input-border);
+  color: var(--fg);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.lang-toggle:hover {
+  opacity: 1;
+  border-color: var(--accent);
+}
+
+/* ─── Message action buttons ─────────────────── */
+.message-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.message-row:hover .msg-action-btn {
+  opacity: 1;
+}
+
+.msg-action-btn {
+  opacity: 0;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.msg-action-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--accent);
+}
+
+.fork-btn { color: var(--vscode-charts-blue, #4fc1ff); }
+.rewind-btn { color: var(--vscode-charts-orange, #e5c07b); }
