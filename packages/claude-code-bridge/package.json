@@ -1,0 +1,35 @@
+{
+  "name": "@cc-vscode/claude-code-bridge",
+  "version": "0.1.0",
+  "description": "Bridge server that wraps official Claude Code CLI in headless mode with WebSocket + REST API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "claude-code-bridge": "./bin/bridge.js"
+  },
+  "files": [
+    "dist/",
+    "bin/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "uuid": "^11.1.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
