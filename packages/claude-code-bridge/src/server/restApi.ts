@@ -13,6 +13,9 @@ import type { Request, Response } from 'express'
 import type { SessionManager } from '../session/sessionManager.js'
 import * as sessionStore from '../session/sessionStore.js'
 import { forkSession, rewindSession, listTurnCheckpoints } from '../session/sessionBranching.js'
+import { listMcpServers, addMcpServer, removeMcpServer, toggleMcpServer } from './mcpConfig.js'
+import { listSkills, getSkill, createSkill, deleteSkill, importSkills, toggleSkill } from './skillsConfig.js'
+import { listAgents, getAgent, addAgent, deleteAgent } from './agentsConfig.js'
 import { logger } from '../utils/logger.js'
 
 interface UserSettings {
@@ -220,6 +223,173 @@ export function createApiRouter(sessionManager: SessionManager) {
       } catch (err) {
         logger.error('Failed to get turn checkpoints', err)
         res.status(500).json({ error: 'Failed to get checkpoints' })
+      }
+    },
+
+    // ─── MCP Servers ─────────────────────────────────────────
+
+    getMcpServers(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        const servers = listMcpServers(cwd)
+        res.json({ servers })
+      } catch (err) {
+        logger.error('Failed to list MCP servers', err)
+        res.status(500).json({ error: 'Failed to list MCP servers' })
+      }
+    },
+
+    addMcpServer(req: Request, res: Response): void {
+      try {
+        const cwd = req.body?.cwd || process.cwd()
+        addMcpServer(cwd, {
+          name: req.body.name,
+          command: req.body.command || '',
+          args: req.body.args || [],
+          url: req.body.url || undefined,
+          enabled: req.body.enabled !== false,
+        })
+        res.status(201).json({ ok: true })
+      } catch (err) {
+        logger.error('Failed to add MCP server', err)
+        res.status(500).json({ error: 'Failed to add MCP server', message: err instanceof Error ? err.message : String(err) })
+      }
+    },
+
+    toggleMcpServer(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        const name = String(req.params.name)
+        const enabled = toggleMcpServer(cwd, name)
+        res.json({ ok: true, enabled })
+      } catch (err) {
+        logger.error('Failed to toggle MCP server', err)
+        res.status(500).json({ error: 'Failed to toggle MCP server' })
+      }
+    },
+
+    removeMcpServer(req: Request, res: Response): void {
+      try {
+        const cwd = req.query.cwd as string || process.cwd()
+        const name = String(req.params.name)
+        removeMcpServer(cwd, name)
+        res.json({ ok: true })
+      } catch (err) {
+        logger.error('Failed to remove MCP server', err)
+        res.status(500).json({ error: 'Failed to remove MCP server' })
+      }
+    },
+
+    // ─── Agents ─────────────────────────────────────────────
+
+    getAgents(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        res.json({ agents: listAgents(cwd) })
+      } catch (err) { logger.error('Failed to list agents', err); res.status(500).json({ error: 'Failed to list agents' }) }
+    },
+
+    getAgentDetail(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        const agent = getAgent(cwd, String(req.params.name))
+        if (!agent) { res.status(404).json({ error: 'Agent not found' }); return }
+        res.json(agent)
+      } catch (err) { logger.error('Failed to get agent', err); res.status(500).json({ error: 'Failed to get agent' }) }
+    },
+
+    createAgent(req: Request, res: Response): void {
+      try {
+        const cwd = req.body?.cwd || process.cwd()
+        addAgent(cwd, req.body.name, { description: req.body.description, prompt: req.body.prompt, tools: req.body.tools, skills: req.body.skills, model: req.body.model, maxTurns: req.body.maxTurns })
+        res.status(201).json({ ok: true })
+      } catch (err) { logger.error('Failed to create agent', err); res.status(500).json({ error: 'Failed to create agent', message: err instanceof Error ? err.message : String(err) }) }
+    },
+
+    deleteAgent(req: Request, res: Response): void {
+      try {
+        const cwd = req.query.cwd as string || process.cwd()
+        deleteAgent(cwd, String(req.params.name))
+        res.json({ ok: true })
+      } catch (err) { logger.error('Failed to delete agent', err); res.status(500).json({ error: 'Failed to delete agent' }) }
+    },
+
+    // ─── Skills ─────────────────────────────────────────────
+
+    getSkills(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        const scope = (req.query.scope as string) === 'user' ? 'user' : 'project'
+        const skills = listSkills(cwd, scope)
+        res.json({ skills })
+      } catch (err) {
+        logger.error('Failed to list skills', err)
+        res.status(500).json({ error: 'Failed to list skills' })
+      }
+    },
+
+    getSkillDetail(req: Request, res: Response): void {
+      try {
+        const cwd = (req.query.cwd as string) || process.cwd()
+        const skill = getSkill(cwd, String(req.params.name))
+        if (!skill) { res.status(404).json({ error: 'Skill not found' }); return }
+        res.json(skill)
+      } catch (err) {
+        logger.error('Failed to get skill', err)
+        res.status(500).json({ error: 'Failed to get skill' })
+      }
+    },
+
+    createSkill(req: Request, res: Response): void {
+      try {
+        const cwd = req.body?.cwd || process.cwd()
+        const scope = req.body?.scope === 'user' ? 'user' : 'project'
+        createSkill(cwd, req.body.name, req.body.description || '', req.body.content || '', scope as 'project'|'user')
+        res.status(201).json({ ok: true })
+      } catch (err) {
+        logger.error('Failed to create skill', err)
+        res.status(500).json({ error: 'Failed to create skill', message: err instanceof Error ? err.message : String(err) })
+      }
+    },
+
+    importSkills(req: Request, res: Response): void {
+      try {
+        const cwd = req.body?.cwd || process.cwd()
+        const sourcePath = req.body?.sourcePath
+        if (!sourcePath || typeof sourcePath !== 'string') {
+          res.status(400).json({ error: 'sourcePath is required' })
+          return
+        }
+        const scope = req.body?.scope === 'user' ? 'user' : 'project'
+        const count = importSkills(cwd, sourcePath, scope as 'project'|'user')
+        res.json({ ok: true, imported: count })
+      } catch (err) {
+        logger.error('Failed to import skills', err)
+        res.status(500).json({ error: 'Failed to import skills', message: err instanceof Error ? err.message : String(err) })
+      }
+    },
+
+    toggleSkill(req: Request, res: Response): void {
+      try {
+        const cwd = req.query.cwd as string || process.cwd()
+        const scope = (req.query.scope as string) === 'user' ? 'user' : 'project'
+        const enabled = toggleSkill(cwd, String(req.params.name), scope as 'project'|'user')
+        res.json({ ok: true, enabled })
+      } catch (err) {
+        logger.error('Failed to toggle skill', err)
+        res.status(500).json({ error: 'Failed to toggle skill' })
+      }
+    },
+
+    deleteSkill(req: Request, res: Response): void {
+      try {
+        const cwd = req.query.cwd as string || process.cwd()
+        const scope = (req.query.scope as string) === 'user' ? 'user' : 'project'
+        deleteSkill(cwd, String(req.params.name), scope as 'project'|'user')
+        res.json({ ok: true })
+      } catch (err) {
+        logger.error('Failed to delete skill', err)
+        res.status(500).json({ error: 'Failed to delete skill' })
       }
     },
 

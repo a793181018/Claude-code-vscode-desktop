@@ -36,6 +36,14 @@ export function MessageList({ messages, streamingText, onFork, onRewind, chatSta
             </button>
           )}
           {isIdle && onFork && isBranchable(msg) && (
+            <button
+              className="msg-action-btn fork-btn"
+              title="Fork a new conversation from here"
+              onClick={() => onFork(idx)}
+            >
+              ⇲
+            </button>
+          )}
         </div>
       ))}
       {streamingText && (

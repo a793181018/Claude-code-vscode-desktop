@@ -11,6 +11,8 @@ import type { Query } from '@anthropic-ai/claude-agent-sdk'
 import { logger } from '../utils/logger.js'
 import * as sessionStore from '../session/sessionStore.js'
 import type { StoredMessage } from '../session/sessionStore.js'
+import { loadMcpConfig } from '../server/mcpConfig.js'
+import { loadAgentsConfig } from '../server/agentsConfig.js'
 
 export interface CliProcessOptions {
   sessionId: string
@@ -80,7 +82,25 @@ export class CliProcess {
 
     logger.debug(`SDK msg (turn ${this.isFirstTurn ? '1' : 'N'}): ${content.substring(0, 200)}`)
 
-    // Build query options with file checkpointing enabled
+    // Build query options with file checkpointing and MCP
+    const mcpConfig = loadMcpConfig(opts.workDir)
+    const mcpServers: Record<string, any> = {}
+    for (const [name, cfg] of Object.entries(mcpConfig.mcpServers)) {
+      if (!cfg.disabled) {
+        if (cfg.url) {
+          mcpServers[name] = { type: 'sse', url: cfg.url }
+        } else {
+          mcpServers[name] = {
+            command: cfg.command,
+            args: cfg.args || [],
+            ...(cfg.env ? { env: cfg.env } : {}),
+          }
+        }
+      }
+    }
+
+    const agentsConfig = loadAgentsConfig(opts.workDir)
+
     const qOpts: Options = {
       cwd: opts.workDir,
       model: opts.model,
@@ -88,7 +108,10 @@ export class CliProcess {
       canUseTool: this.permCallback || undefined,
       enableFileCheckpointing: true,
       extraArgs: { 'replay-user-messages': null },
-    }
+      settingSources: ['project'],
+      ...(Object.keys(agentsConfig.agents).length > 0 ? { agents: agentsConfig.agents } : {}),
+      ...(Object.keys(mcpServers).length > 0 ? { mcpServers } : {}),
+    } as any
 
     if (!this.isFirstTurn && this.sdkSessionId) {
       qOpts.continue = true

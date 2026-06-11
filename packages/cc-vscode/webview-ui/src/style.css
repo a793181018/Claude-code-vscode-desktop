@@ -561,6 +561,213 @@ body {
   border-color: var(--accent);
 }
 
+/* ─── MCP Settings ───────────────────────────── */
+.mcp-settings {
+  padding: 12px;
+}
+
+.mcp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mcp-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.mcp-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+}
+
+.mcp-input {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.mcp-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mcp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mcp-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+}
+
+.mcp-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcp-item-name {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.mcp-item-cmd {
+  font-size: 10px;
+  opacity: 0.5;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-item-remove {
+  background: none;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.mcp-item:hover .mcp-item-remove { opacity: 1; }
+
+.mcp-item-remove:hover { background: rgba(244,135,113,0.2); }
+
+.mcp-empty {
+  padding: 16px;
+  text-align: center;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-small:hover { background: rgba(255,255,255,0.1); }
+
+.btn-primary { background: var(--accent); color: var(--accent-fg); border: none; }
+.btn-primary:hover { background: var(--accent-hover); }
+
+.settings-gear-btn {
+  background: none;
+  border: none;
+  color: var(--status-fg);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+  opacity: 0.7;
+  margin-right: 8px;
+}
+.settings-gear-btn:hover { opacity: 1; }
+
+/* ─── MCP Overlay ───────────────────────────── */
+.mcp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mcp-overlay-content {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.mcp-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mcp-overlay-header h3 { margin: 0; font-size: 14px; }
+
+.mcp-overlay-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.mcp-tab {
+  padding: 4px 12px;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  opacity: 0.6;
+  font-family: inherit;
+}
+.mcp-tab:hover { opacity: 1; }
+.mcp-tab.active { opacity: 1; border-bottom-color: var(--accent); }
+
+.mcp-textarea {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.mcp-textarea:focus { outline: none; border-color: var(--accent); }
+
+/* Toggle switch */
+.toggle-switch {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.toggle-switch.on { color: var(--accent); opacity: 1; }
+.toggle-switch.off { color: var(--error); }
+.toggle-switch:hover { opacity: 1; }
+
+.mcp-item.disabled { opacity: 0.4; }
+
 /* ─── Message action buttons ─────────────────── */
 .message-row {
   position: relative;

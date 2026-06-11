@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useChatStore } from '../useChatStore'
 import { vscodeApi } from '../vscodeApi'
 import { MessageList } from './MessageList'
@@ -6,6 +6,9 @@ import { ChatInput } from './ChatInput'
 import { PermissionDialog } from './PermissionDialog'
 import { Sidebar } from './Sidebar'
 import { SettingsBar } from './SettingsBar'
+import { McpSettings } from './McpSettings'
+import { SkillsSettings } from './SkillsSettings'
+import { AgentsSettings } from './AgentsSettings'
 import type { ChatState } from '../types'
 
 export function App() {
@@ -29,6 +32,8 @@ export function App() {
     bridgeUrl,
   } = useChatStore()
 
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<'mcp' | 'agents' | 'skills'>('mcp')
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -71,6 +76,7 @@ export function App() {
             )}
           </span>
           <span className="status-right">
+            <button className="settings-gear-btn" onClick={() => setShowSettings(true)} title="Settings">⚙</button>
             {bridgeUrl ? `Bridge: ${bridgeUrl}` : 'No bridge'}
           </span>
         </div>
@@ -108,6 +114,22 @@ export function App() {
             permission={pendingPermission}
             onRespond={respondToPermission}
           />
+        )}
+
+        {showSettings && (
+          <div className="mcp-overlay" onClick={() => setShowSettings(false)}>
+            <div className="mcp-overlay-content" onClick={(e) => e.stopPropagation()}>
+              <div className="mcp-overlay-header">
+                <div className="mcp-overlay-tabs">
+                  <button className={`mcp-tab ${settingsTab === 'mcp' ? 'active' : ''}`} onClick={() => setSettingsTab('mcp')}>MCP</button>
+                  <button className={`mcp-tab ${settingsTab === 'agents' ? 'active' : ''}`} onClick={() => setSettingsTab('agents')}>Agents</button>
+                  <button className={`mcp-tab ${settingsTab === 'skills' ? 'active' : ''}`} onClick={() => setSettingsTab('skills')}>Skills</button>
+                </div>
+                <button className="btn-small" onClick={() => setShowSettings(false)}>Close</button>
+              </div>
+              {settingsTab === 'mcp' ? <McpSettings /> : settingsTab === 'agents' ? <AgentsSettings /> : <SkillsSettings />}
+            </div>
+          </div>
         )}
       </div>
     </div>
