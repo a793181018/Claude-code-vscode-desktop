@@ -521,29 +521,49 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   margin-bottom: 8px;
-  overflow: hidden;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .slash-item {
   display: flex;
   gap: 12px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   cursor: pointer;
   font-size: 12px;
+  align-items: center;
+  overflow: hidden;
 }
-.slash-item:hover {
+.slash-item:hover,
+.slash-item.selected {
   background: var(--accent);
   color: var(--accent-fg);
 }
 
 .slash-cmd {
   font-weight: 600;
-  min-width: 80px;
   font-family: var(--vscode-editor-font-family, monospace);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .slash-desc {
+  opacity: 0.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.slash-source {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--accent-fg);
   opacity: 0.7;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .lang-toggle {

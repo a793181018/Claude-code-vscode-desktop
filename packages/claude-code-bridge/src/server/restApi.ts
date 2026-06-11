@@ -33,6 +33,15 @@ const DEFAULT_SETTINGS: UserSettings = {
 let userSettings: UserSettings = { ...DEFAULT_SETTINGS }
 
 export function createApiRouter(sessionManager: SessionManager) {
+  function resolveSlashCommandsCwd(req: Request): string {
+    const sessionId = String(req.params.sessionId || '')
+    if (sessionId) {
+      const info = sessionManager.getSessionInfo(sessionId)
+      if (info?.workDir) return info.workDir
+    }
+    return String(req.query.cwd || process.cwd())
+  }
+
   return {
     // ─── Settings ────────────────────────────────────────────
 
@@ -107,14 +116,49 @@ export function createApiRouter(sessionManager: SessionManager) {
 
     // ─── Slash Commands ──────────────────────────────────────
 
-    getSlashCommands(_req: Request, res: Response): void {
+    getSlashCommands(req: Request, res: Response): void {
+      // Built-in Claude Code commands
+      const builtins: Array<{ name: string; description: string; source: string }> = [
+        { name: 'help', description: 'Get help with Claude Code', source: 'builtin' },
+        { name: 'clear', description: 'Clear the conversation', source: 'builtin' },
+        { name: 'compact', description: 'Compact the conversation context', source: 'builtin' },
+        { name: 'cost', description: 'Show token usage and cost', source: 'builtin' },
+        { name: 'review', description: 'Review code changes', source: 'builtin' },
+        { name: 'security-review', description: 'Security review of changes', source: 'builtin' },
+        { name: 'context', description: 'Show context usage', source: 'builtin' },
+        { name: 'doctor', description: 'Diagnose Claude Code issues', source: 'builtin' },
+        { name: 'pr-comments', description: 'Review PR comments', source: 'builtin' },
+        { name: 'release-notes', description: 'Generate release notes', source: 'builtin' },
+        { name: 'init', description: 'Initialize project setup', source: 'builtin' },
+        { name: 'login', description: 'Log in to Anthropic', source: 'builtin' },
+        { name: 'logout', description: 'Log out', source: 'builtin' },
+        { name: 'status', description: 'Show session status', source: 'builtin' },
+        { name: 'add-dir', description: 'Add a directory to context', source: 'builtin' },
+        { name: 'memory', description: 'Edit memory', source: 'builtin' },
+      ]
+
+      // Load user-defined skills as slash commands
+      const skillCommands: Array<{ name: string; description: string; source: string }> = []
+      try {
+        const cwd = resolveSlashCommandsCwd(req)
+        for (const scope of ['project', 'user'] as const) {
+          const skills = listSkills(cwd, scope)
+          for (const skill of skills) {
+            if (skill.enabled) {
+              skillCommands.push({
+                name: skill.name,
+                description: skill.description,
+                source: `skill:${scope}`,
+              })
+            }
+          }
+        }
+      } catch (err) {
+        logger.warn(`Failed to load skills for slash commands: ${err}`)
+      }
+
       res.json({
-        commands: [
-          { name: 'help', description: 'Get help with Claude Code' },
-          { name: 'clear', description: 'Clear the conversation' },
-          { name: 'compact', description: 'Compact the conversation context' },
-          { name: 'cost', description: 'Show token usage and cost' },
-        ],
+        commands: [...builtins, ...skillCommands],
       })
     },
 

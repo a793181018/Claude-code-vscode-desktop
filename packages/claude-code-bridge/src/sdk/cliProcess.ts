@@ -108,7 +108,8 @@ export class CliProcess {
       canUseTool: this.permCallback || undefined,
       enableFileCheckpointing: true,
       extraArgs: { 'replay-user-messages': null },
-      settingSources: ['project'],
+      settingSources: ['project', 'user'],
+      skills: 'all',
       ...(Object.keys(agentsConfig.agents).length > 0 ? { agents: agentsConfig.agents } : {}),
       ...(Object.keys(mcpServers).length > 0 ? { mcpServers } : {}),
     } as any

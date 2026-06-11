@@ -12,6 +12,7 @@ import { createStreamState, translateCliMessage, type SessionStreamState } from 
 import type { ServerMessage } from '../types/messages.js'
 import { logger } from '../utils/logger.js'
 import * as sessionStore from './sessionStore.js'
+import { getSkill } from '../server/skillsConfig.js'
 
 export interface SessionInfo {
   sessionId: string
@@ -192,12 +193,15 @@ export class SessionManager {
     const state = this.sessions.get(sessionId)
     if (!state) throw new Error(`Session ${sessionId} not found`)
 
-    sessionStore.appendMessage(sessionId, { timestamp: Date.now(), type: 'user', content })
+    // Resolve skill slash commands: /skill-name args → load SKILL.md + args
+    const resolvedContent = resolveSkillCommand(content, state.info.workDir)
+
+    sessionStore.appendMessage(sessionId, { timestamp: Date.now(), type: 'user', content: resolvedContent })
     sessionStore.updateSessionLastActive(sessionId)
 
     state.cliProcess.sendMessage({
       type: 'user',
-      message: { role: 'user', content },
+      message: { role: 'user', content: resolvedContent },
       parent_tool_use_id: null,
       session_id: sessionId,
     })
@@ -373,4 +377,51 @@ function persistCliMessage(sessionId: string, cliMsg: Record<string, any>): void
     }
   }
   sessionStore.updateSessionLastActive(sessionId)
+}
+
+// ============================================================================
+// Skill slash command resolution
+// ============================================================================
+
+/**
+ * Resolve /skill-name into the skill's content + user message.
+ * Searches both project and user scopes for the SKILL.md.
+ */
+function resolveSkillCommand(content: string, workDir: string): string {
+  // Only process lines starting with /
+  if (!content.startsWith('/')) return content
+
+  // Extract skill name (first line, or until first space/tab)
+  const sepMatch = content.match(/[ \t\r\n]/)
+  const cmd = sepMatch ? content.substring(0, sepMatch.index!) : content
+  const args = sepMatch ? content.substring(sepMatch.index! + 1).trim() : ''
+
+  // Skip built-in commands
+  const builtins = new Set([
+    'help', 'clear', 'compact', 'cost', 'review', 'security-review',
+    'context', 'doctor', 'pr-comments', 'release-notes', 'init',
+    'login', 'logout', 'status', 'add-dir', 'memory',
+  ])
+  // Remove leading /
+  const skillName = cmd.startsWith('/') ? cmd.substring(1) : cmd
+  if (builtins.has(skillName)) return content
+
+  // Search for skill in project then user scope
+  let skill = getSkill(workDir, skillName, 'project')
+  if (!skill) {
+    skill = getSkill(workDir, skillName, 'user')
+  }
+
+  if (!skill || !skill.enabled) {
+    // Skill not found — pass through (let SDK handle)
+    return content
+  }
+
+  // Inject skill content before user's message
+  const prompt = args
+    ? `${skill.content}\n\n---\n\nUser request: ${args}`
+    : skill.content
+
+  logger.info(`Resolved skill /${skillName} (${skill.description})`)
+  return prompt
 }

@@ -105,6 +105,7 @@ export function App() {
               onSend={sendMessage}
               onStop={stopGeneration}
               onClear={() => useChatStore.getState().clearSession()}
+              sessionId={sessionId}
             />
           </>
         )}

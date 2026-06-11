@@ -30,12 +30,19 @@ export interface AgentsConfig {
  */
 export function loadAgentsConfig(cwd: string): AgentsConfig {
   const result: AgentsConfig = { agents: {} }
-  const dirs = getParentDirs(cwd)
-  // Also check user home
-  const home = process.env.HOME || process.env.USERPROFILE || '/tmp'
-  dirs.unshift(path.join(home, '.claude'))
 
-  for (const dir of dirs) {
+  // Check user home .claude/agents.json first
+  const home = process.env.HOME || process.env.USERPROFILE || '/tmp'
+  const homeAgentsPath = path.join(home, '.claude', 'agents.json')
+  if (fs.existsSync(homeAgentsPath)) {
+    try {
+      const content = JSON.parse(fs.readFileSync(homeAgentsPath, 'utf-8'))
+      if (content.agents) Object.assign(result.agents, content.agents)
+    } catch (err) { logger.warn(`Failed to parse ${homeAgentsPath}: ${err}`) }
+  }
+
+  // Then check project .claude/agents.json, searching upward from cwd
+  for (const dir of getParentDirs(cwd)) {
     const filePath = path.join(dir, '.claude', 'agents.json')
     if (fs.existsSync(filePath)) {
       try {
@@ -76,10 +83,23 @@ export function updateAgent(cwd: string, name: string, def: AgentDefinition): vo
 }
 
 export function deleteAgent(cwd: string, name: string): void {
-  const dirs = getParentDirs(cwd)
   const home = process.env.HOME || process.env.USERPROFILE || '/tmp'
-  dirs.unshift(path.join(home, '.claude'))
-  for (const dir of dirs) {
+
+  // Check home .claude/agents.json first
+  const homeAgentsPath = path.join(home, '.claude', 'agents.json')
+  if (fs.existsSync(homeAgentsPath)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(homeAgentsPath, 'utf-8'))
+      if (config.agents?.[name]) {
+        delete config.agents[name]
+        fs.writeFileSync(homeAgentsPath, JSON.stringify(config, null, 2), 'utf-8')
+        return
+      }
+    } catch (err) { logger.warn(`Failed to update ${homeAgentsPath}: ${err}`) }
+  }
+
+  // Then check project .claude/agents.json
+  for (const dir of getParentDirs(cwd)) {
     const filePath = path.join(dir, '.claude', 'agents.json')
     if (fs.existsSync(filePath)) {
       try {
