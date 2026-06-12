@@ -11,31 +11,44 @@ import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 
-/** Resolve the node binary path (VS Code may not have nvm's node in PATH) */
-function resolveNodePath(): string {
-  // Try common paths
-  const candidates = [
-    path.join(process.env.HOME || '/home/heipi', '.config/nvm/versions/node/v24.15.0/bin/node'),
-    path.join(process.env.HOME || '/home/heipi', '.nvm/versions/node/v24.15.0/bin/node'),
-    '/usr/local/bin/node',
-    '/usr/bin/node',
-  ]
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c
-  }
-  // Fallback: try finding via nvm
-  try {
-    const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || '/home/heipi', '.config/nvm')
-    const versionsDir = path.join(nvmDir, 'versions', 'node')
-    if (fs.existsSync(versionsDir)) {
-      const versions = fs.readdirSync(versionsDir).sort().reverse()
-      for (const v of versions) {
-        const nodeBin = path.join(versionsDir, v, 'bin', 'node')
-        if (fs.existsSync(nodeBin)) return nodeBin
-      }
+/**
+ * Resolve the runtime for the bridge process.
+ * Uses VS Code's built-in Electron (which bundles Node.js) — no standalone
+ * Node.js installation required.
+ */
+function resolveBridgeRuntime(): { bin: string; env: Record<string, string> } {
+  // Use VS Code's own Electron binary as the Node.js runtime.
+  // Setting ELECTRON_RUN_AS_NODE=1 makes it behave like plain Node.js.
+  const electron = process.execPath
+  if (fs.existsSync(electron)) {
+    return {
+      bin: electron,
+      env: { ELECTRON_RUN_AS_NODE: '1' },
     }
-  } catch { /* ignore */ }
-  return 'node' // final fallback
+  }
+
+  // Fallback: try standalone Node.js
+  const isWin = process.platform === 'win32'
+  const home = process.env.HOME || process.env.USERPROFILE || ''
+  const candidates = isWin
+    ? [
+        path.join(home, 'AppData', 'Roaming', 'nvm', process.env.NVM_VERSION || 'current', 'node.exe'),
+        path.join(home, 'AppData', 'Roaming', 'nvm-windows', 'node.exe'),
+        path.join(process.env.ProgramFiles || 'C:\\Program Files', 'nodejs', 'node.exe'),
+        'node',
+      ]
+    : [
+        path.join(home, '.config/nvm/versions/node/v24.15.0/bin/node'),
+        '/usr/local/bin/node',
+        '/usr/bin/node',
+        'node',
+      ]
+
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return { bin: c, env: {} }
+  }
+
+  return { bin: 'node', env: {} }
 }
 
 export type BridgeState = 'stopped' | 'starting' | 'running' | 'error'
@@ -111,17 +124,13 @@ export class BridgeManager {
     this.channel.appendLine(`Workspace: ${workspaceDir}`)
 
     return new Promise((resolve, reject) => {
-      const nodeBin = resolveNodePath()
-      this.channel.appendLine(`Node binary: ${nodeBin}`)
+      const { bin, env } = resolveBridgeRuntime()
+      this.channel.appendLine(`Runtime: ${bin}`)
 
-      this.process = spawn(nodeBin, [bridgeJs], {
+      this.process = spawn(bin, [bridgeJs], {
         cwd: workspaceDir,
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env as Record<string, string>,
-          BRIDGE_HOST: this.host,
-          BRIDGE_PORT: '0',
-        },
+        env: { ...process.env, ...env, BRIDGE_HOST: this.host, BRIDGE_PORT: '0' },
       })
 
       let resolved = false

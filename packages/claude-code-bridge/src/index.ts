@@ -34,22 +34,34 @@ export interface BridgeInstance {
 
 /**
  * Auto-detect the Claude Code CLI binary.
- * Searches common locations and PATH.
+ * Searches common locations and PATH (cross-platform).
  */
 function resolveClaudePath(cliPath?: string): string {
   if (cliPath) return cliPath
 
-  const candidates = [
-    '/home/heipi/.local/bin/claude',           // Official Claude Code
-    '/home/heipi/.local/bin/claude-haha',      // cc-haha: fallback
-    '/usr/local/bin/claude',
-    '/usr/bin/claude',
-    'claude',  // fallback to PATH
-  ]
+  const isWin = process.platform === 'win32'
+  const home = process.env.HOME || process.env.USERPROFILE || ''
+
+  const candidates: string[] = isWin
+    ? [
+        `${home}/.local/bin/claude.cmd`,
+        `${home}/.local/bin/claude.exe`,
+        `${home}/AppData/Roaming/npm/claude.cmd`,
+        `${home}/AppData/Roaming/npm/claude.exe`,
+        'claude.cmd',
+        'claude.exe',
+        'claude',
+      ]
+    : [
+        `${home}/.local/bin/claude`,
+        '/usr/local/bin/claude',
+        '/usr/bin/claude',
+        'claude',
+      ]
 
   for (const candidate of candidates) {
-    if (candidate === 'claude' || existsSync(candidate)) {
-      logger.info(`Resolved claude CLI: ${candidate}${candidate === 'claude' ? ' (from PATH)' : ''}`)
+    if (candidate === 'claude' || candidate === 'claude.cmd' || candidate === 'claude.exe' || existsSync(candidate)) {
+      logger.info(`Resolved claude CLI: ${candidate}`)
       return candidate
     }
   }

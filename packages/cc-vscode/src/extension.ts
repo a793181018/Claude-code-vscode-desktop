@@ -3,6 +3,9 @@
  */
 
 import * as vscode from 'vscode'
+import * as cp from 'node:child_process'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { BridgeManager } from './bridge/bridgeManager.js'
 import { createChatWebview } from './webview/createWebview.js'
 
@@ -27,7 +30,6 @@ export async function activate(context: vscode.ExtensionContext) {
   // ─── Bridge Manager ──────────────────────────────────────────
   bridgeManager = new BridgeManager(channel, context.extensionUri)
 
-  // Status bar update on bridge state change
   bridgeManager.onStateChange((state) => {
     if (statusBarItem) {
       switch (state) {
@@ -53,27 +55,34 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   })
 
+  // ─── Install Dependencies Command ─────────────────────────────
+  context.subscriptions.push(
+    vscode.commands.registerCommand('cc-vscode.installDeps', async () => {
+      const extDir = context.extensionUri.fsPath
+      channel.appendLine('Installing dependencies...')
+      channel.show()
+
+      const result = await runNpmInstall(extDir, channel)
+      if (result) {
+        channel.appendLine('Dependencies installed successfully. Restarting bridge...')
+        await startBridge(channel)
+      } else {
+        channel.appendLine('Failed to install dependencies.')
+        vscode.window.showErrorMessage(
+          'Failed to install dependencies. Please run "npm install" manually in the extension directory.'
+        )
+      }
+    }),
+  )
+
   // ─── Start Bridge ────────────────────────────────────────────
-  try {
-    const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
-    channel.appendLine(`Starting bridge with workspace: ${workspaceDir}`)
-    bridgeManager.setState('starting')
-    await bridgeManager.start(workspaceDir)
-    bridgeManager.setState('running')
-    channel.appendLine(`Bridge started at ${bridgeManager.getBaseUrl()}`)
-  } catch (err) {
-    channel.appendLine(`Failed to start bridge: ${err}`)
-    bridgeManager.setState('error')
-    vscode.window.showErrorMessage(
-      `Claude Code: Failed to start bridge server. Check Output > Claude Code for details.`,
-    )
-  }
+  await startBridge(channel)
 
   // ─── Commands ────────────────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand('cc-vscode.openChat', () => {
       if (!bridgeManager?.isRunning()) {
-        vscode.window.showErrorMessage('Claude Code bridge server is not running.')
+        promptBridgeNotRunning(channel, context)
         return
       }
       createChatWebview(context, bridgeManager)
@@ -83,7 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('cc-vscode.newSession', () => {
       if (!bridgeManager?.isRunning()) {
-        vscode.window.showErrorMessage('Claude Code bridge server is not running.')
+        promptBridgeNotRunning(channel, context)
         return
       }
       createChatWebview(context, bridgeManager, { newSession: true })
@@ -101,25 +110,123 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('cc-vscode.restartBridge', async () => {
       channel.appendLine('Restarting bridge...')
-      bridgeManager?.setState('starting')
-      try {
-        await bridgeManager?.stop()
-        const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
-        await bridgeManager?.start(workspaceDir)
-        bridgeManager?.setState('running')
-        channel.appendLine('Bridge restarted')
-        vscode.window.showInformationMessage('Claude Code bridge server restarted.')
-      } catch (err) {
-        channel.appendLine(`Failed to restart bridge: ${err}`)
-        bridgeManager?.setState('error')
-        vscode.window.showErrorMessage(
-          `Claude Code: Failed to restart bridge. Check Output > Claude Code for details.`
-        )
-      }
+      await startBridge(channel)
     }),
   )
 
   channel.appendLine('Claude Code extension activated')
+}
+
+async function startBridge(channel: vscode.OutputChannel): Promise<void> {
+  if (!bridgeManager) return
+
+  bridgeManager.setState('starting')
+  try {
+    await bridgeManager?.stop()
+    const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
+    channel.appendLine(`Starting bridge with workspace: ${workspaceDir}`)
+    await bridgeManager.start(workspaceDir)
+    bridgeManager.setState('running')
+    channel.appendLine(`Bridge started at ${bridgeManager.getBaseUrl()}`)
+    vscode.window.showInformationMessage('Claude Code bridge server started.')
+  } catch (err: any) {
+    channel.appendLine(`Failed to start bridge: ${err}`)
+
+    // Check if it's a missing SDK dependency
+    const errMsg = err?.message || String(err)
+    if (errMsg.includes('Cannot find package') || errMsg.includes('Cannot find module')) {
+      showInstallDepsPrompt(channel)
+    } else {
+      bridgeManager?.setState('error')
+      vscode.window.showErrorMessage(
+        'Claude Code: Failed to start bridge server. Check Output > Claude Code for details.',
+      )
+    }
+  }
+}
+
+function showInstallDepsPrompt(channel: vscode.OutputChannel): void {
+  bridgeManager?.setState('error')
+  channel.appendLine(
+    'SDK dependency not found. Run "Install Dependencies" or run "npm install" in the extension directory.',
+  )
+  vscode.window
+    .showErrorMessage(
+      'Claude Code: Dependencies not installed. Click "Install" to set up automatically.',
+      'Install',
+    )
+    .then((choice) => {
+      if (choice === 'Install') {
+        vscode.commands.executeCommand('cc-vscode.installDeps')
+      }
+    })
+}
+
+function promptBridgeNotRunning(
+  channel: vscode.OutputChannel,
+  context: vscode.ExtensionContext,
+): void {
+  vscode.window
+    .showErrorMessage(
+      'Claude Code bridge server is not running.',
+      'Retry',
+      'Install Dependencies',
+    )
+    .then((choice) => {
+      if (choice === 'Retry') {
+        startBridge(channel)
+      } else if (choice === 'Install Dependencies') {
+        vscode.commands.executeCommand('cc-vscode.installDeps')
+      }
+    })
+}
+
+/** Find npm binary: prefer the one alongside Node.js, then PATH fallback */
+function findNpm(): string {
+  const isWin = process.platform === 'win32'
+  const npmName = isWin ? 'npm.cmd' : 'npm'
+
+  // Try alongside the Node.js binary (standalone install)
+  if (isWin && process.env.ProgramFiles) {
+    const candidate = path.join(process.env.ProgramFiles, 'nodejs', npmName)
+    if (fs.existsSync(candidate)) return candidate
+  }
+  // Try nvm-windows
+  const home = process.env.HOME || process.env.USERPROFILE || ''
+  const nvmCandidate = path.join(home, 'AppData', 'Roaming', 'nvm-windows', npmName)
+  if (fs.existsSync(nvmCandidate)) return nvmCandidate
+
+  return npmName // fallback to PATH
+}
+
+function runNpmInstall(cwd: string, channel: vscode.OutputChannel): Promise<boolean> {
+  return new Promise((resolve) => {
+    const npmBin = findNpm()
+    channel.appendLine(`Using npm: ${npmBin}`)
+
+    const proc = cp.spawn(npmBin, ['install', '--omit=dev', '--no-package-lock'], {
+      cwd,
+      shell: true,
+    })
+
+    proc.stdout?.on('data', (d: Buffer) => channel.append(d.toString()))
+    proc.stderr?.on('data', (d: Buffer) => channel.append(d.toString()))
+
+    proc.on('close', (code) => {
+      resolve(code === 0)
+    })
+
+    proc.on('error', (err) => {
+      channel.appendLine(`npm install error: ${err.message}`)
+      resolve(false)
+    })
+
+    // Timeout after 120 seconds
+    setTimeout(() => {
+      proc.kill()
+      resolve(false)
+    }, 120_000)
+  })
 }
 
 export async function deactivate() {
