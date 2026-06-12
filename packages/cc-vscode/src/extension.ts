@@ -117,6 +117,40 @@ export async function activate(context: vscode.ExtensionContext) {
   channel.appendLine('Claude Code extension activated')
 }
 
+function getClaudeEnv(): Record<string, string> {
+  const config = vscode.workspace.getConfiguration('claudeCode')
+  const env: Record<string, string> = {}
+
+  const mapping: Record<string, string> = {
+    baseUrl: 'ANTHROPIC_BASE_URL',
+    authToken: 'ANTHROPIC_AUTH_TOKEN',
+    model: 'ANTHROPIC_MODEL',
+    defaultOpusModel: 'ANTHROPIC_DEFAULT_OPUS_MODEL',
+    defaultSonnetModel: 'ANTHROPIC_DEFAULT_SONNET_MODEL',
+    defaultHaikuModel: 'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+    subagentModel: 'CLAUDE_CODE_SUBAGENT_MODEL',
+    effortLevel: 'CLAUDE_CODE_EFFORT_LEVEL',
+  }
+
+  for (const [setting, envVar] of Object.entries(mapping)) {
+    const val = config.get<string>(setting)
+    if (val) env[envVar] = val
+  }
+
+  // Merge additional env vars
+  const extraEnv = config.get<Record<string, string>>('extraEnv') || {}
+  Object.assign(env, extraEnv)
+
+  // Also set ANTHROPIC_API_KEY from ANTHROPIC_AUTH_TOKEN if auth token is provided
+  // (many Claude Code components check ANTHROPIC_API_KEY specifically)
+  if (env.ANTHROPIC_AUTH_TOKEN) {
+    // Set apiKeyDummy to avoid triggering login checks that require stored credentials
+    env.ANTHROPIC_API_KEY = env.ANTHROPIC_AUTH_TOKEN
+  }
+
+  return env
+}
+
 async function startBridge(channel: vscode.OutputChannel): Promise<void> {
   if (!bridgeManager) return
 
@@ -124,8 +158,12 @@ async function startBridge(channel: vscode.OutputChannel): Promise<void> {
   try {
     await bridgeManager?.stop()
     const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
+    const claudeEnv = getClaudeEnv()
     channel.appendLine(`Starting bridge with workspace: ${workspaceDir}`)
-    await bridgeManager.start(workspaceDir)
+    if (Object.keys(claudeEnv).length > 0) {
+      channel.appendLine(`Claude Code env: ${Object.keys(claudeEnv).join(', ')}`)
+    }
+    await bridgeManager.start(workspaceDir, claudeEnv)
     bridgeManager.setState('running')
     channel.appendLine(`Bridge started at ${bridgeManager.getBaseUrl()}`)
     vscode.window.showInformationMessage('Claude Code bridge server started.')

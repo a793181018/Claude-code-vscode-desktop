@@ -25,7 +25,7 @@ interface UserSettings {
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
-  model: 'claude-sonnet-4-20250514',
+  model: '', // empty = use SDK default from env (ANTHROPIC_MODEL)
   permissionMode: 'bypassPermissions',
   locale: 'en',
 }

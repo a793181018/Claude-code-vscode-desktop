@@ -108,7 +108,7 @@ export class BridgeManager {
   /**
    * Start the bridge server as a child process.
    */
-  async start(workspaceDir: string): Promise<void> {
+  async start(workspaceDir: string, extraEnv?: Record<string, string>): Promise<void> {
     if (this.isRunning()) {
       this.channel.appendLine('Bridge is already running, stopping first...')
       await this.stop()
@@ -130,7 +130,7 @@ export class BridgeManager {
       this.process = spawn(bin, [bridgeJs], {
         cwd: workspaceDir,
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, ...env, BRIDGE_HOST: this.host, BRIDGE_PORT: '0' },
+        env: { ...process.env, ...env, ...extraEnv, BRIDGE_HOST: this.host, BRIDGE_PORT: '0' },
       })
 
       let resolved = false

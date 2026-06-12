@@ -44,6 +44,7 @@ export class CliProcess {
   private lastQuery: Query | null = null
   private _checkpoints: CheckpointEntry[] = []
   private msgIndex = 0
+  private cliPath: string
 
   get pid(): number | null { return this._pid }
   get isRunning(): boolean { return this._isRunning }
@@ -51,7 +52,9 @@ export class CliProcess {
   get currentCheckpointUuid(): string | null { return this._currentCheckpointUuid }
   get currentTurnHasFileOps(): boolean { return this._currentTurnHasFileOps }
 
-  constructor(_cliPath = '') {}
+  constructor(cliPath = '') {
+    this.cliPath = cliPath
+  }
 
   start(options: CliProcessOptions): void {
     this.pendingOptions = options
@@ -103,13 +106,14 @@ export class CliProcess {
 
     const qOpts: Options = {
       cwd: opts.workDir,
-      model: opts.model,
+      ...(opts.model ? { model: opts.model } : {}),
       permissionMode: this.mapPermissionMode(opts.permissionMode),
       canUseTool: this.permCallback || undefined,
       enableFileCheckpointing: true,
       extraArgs: { 'replay-user-messages': null },
       settingSources: ['project', 'user'],
       skills: 'all',
+      pathToClaudeCodeExecutable: this.cliPath || undefined,
       ...(Object.keys(agentsConfig.agents).length > 0 ? { agents: agentsConfig.agents } : {}),
       ...(Object.keys(mcpServers).length > 0 ? { mcpServers } : {}),
     } as any

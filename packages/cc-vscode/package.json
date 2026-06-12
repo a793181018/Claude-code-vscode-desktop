@@ -18,6 +18,56 @@
     "webview-ui/dist/"
   ],
   "contributes": {
+    "configuration": {
+      "title": "Claude Code",
+      "properties": {
+        "claudeCode.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "API base URL (ANTHROPIC_BASE_URL)"
+        },
+        "claudeCode.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "API auth token (ANTHROPIC_AUTH_TOKEN)"
+        },
+        "claudeCode.model": {
+          "type": "string",
+          "default": "",
+          "description": "Default model (ANTHROPIC_MODEL)"
+        },
+        "claudeCode.defaultOpusModel": {
+          "type": "string",
+          "default": "",
+          "description": "Default Opus model (ANTHROPIC_DEFAULT_OPUS_MODEL)"
+        },
+        "claudeCode.defaultSonnetModel": {
+          "type": "string",
+          "default": "",
+          "description": "Default Sonnet model (ANTHROPIC_DEFAULT_SONNET_MODEL)"
+        },
+        "claudeCode.defaultHaikuModel": {
+          "type": "string",
+          "default": "",
+          "description": "Default Haiku model (ANTHROPIC_DEFAULT_HAIKU_MODEL)"
+        },
+        "claudeCode.subagentModel": {
+          "type": "string",
+          "default": "",
+          "description": "Subagent model (CLAUDE_CODE_SUBAGENT_MODEL)"
+        },
+        "claudeCode.effortLevel": {
+          "type": "string",
+          "default": "",
+          "description": "Effort level (CLAUDE_CODE_EFFORT_LEVEL)"
+        },
+        "claudeCode.extraEnv": {
+          "type": "object",
+          "default": {},
+          "description": "Additional environment variables for the Claude Code bridge"
+        }
+      }
+    },
     "commands": [
       {
         "command": "cc-vscode.openChat",
