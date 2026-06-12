@@ -8,6 +8,9 @@ const STRINGS: Record<string, Record<string, string>> = {
   'status.disconnected': { en: 'Disconnected', zh: '已断开' },
   'status.connecting': { en: 'Connecting...', zh: '连接中...' },
   'status.noSession': { en: 'No session', zh: '无会话' },
+  'status.session': { en: 'Session', zh: '会话' },
+  'status.bridge': { en: 'Bridge', zh: '桥接' },
+  'status.noBridge': { en: 'No bridge', zh: '无桥接' },
 
   // ─── Empty State ────────────────────────────────────────
   'empty.title': { en: 'Claude Code', zh: 'Claude Code' },

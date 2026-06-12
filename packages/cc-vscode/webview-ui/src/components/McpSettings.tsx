@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { restRequest } from '../vscodeApi'
+import { t } from '../i18n'
+import { useChatStore } from '../useChatStore'
 
 interface McpServer {
   name: string
@@ -16,6 +18,7 @@ export function McpSettings() {
   const [newName, setNewName] = useState('')
   const [newCommand, setNewCommand] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const locale = useChatStore((s) => s.locale)
 
   useEffect(() => { loadServers() }, [])
 
@@ -65,9 +68,9 @@ export function McpSettings() {
   return (
     <div className="mcp-settings">
       <div className="mcp-header">
-        <h3>MCP Servers</h3>
+        <h3>{t('mcp.title', locale)}</h3>
         <button className="btn-small" onClick={() => setShowAdd(!showAdd)}>
-          {showAdd ? 'Cancel' : '+ Add'}
+          {showAdd ? t('mcp.cancel', locale) : t('mcp.add', locale)}
         </button>
       </div>
 
@@ -75,30 +78,32 @@ export function McpSettings() {
         <div className="mcp-add-form">
           <input
             className="mcp-input"
-            placeholder="Server name (e.g. web-search)"
+            placeholder={t('mcp.namePlaceholder', locale)}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
           <input
             className="mcp-input"
-            placeholder="URL (e.g. http://192.168.1.100:8000/mcp)"
+            placeholder={t('mcp.urlPlaceholder', locale)}
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
           />
           <input
             className="mcp-input"
-            placeholder="Or command (e.g. npx @playwright/mcp@latest)"
+            placeholder={t('mcp.cmdPlaceholder', locale)}
             value={newCommand}
             onChange={(e) => setNewCommand(e.target.value)}
           />
-          <button className="btn-small btn-primary" onClick={addServer}>Add</button>
+          <button className="btn-small btn-primary" onClick={addServer}>
+            {t('mcp.btnAdd', locale)}
+          </button>
         </div>
       )}
 
       {loading ? (
-        <div className="mcp-empty">Loading...</div>
+        <div className="mcp-empty">{t('error.loading', locale)}</div>
       ) : servers.length === 0 ? (
-        <div className="mcp-empty">No MCP servers configured</div>
+        <div className="mcp-empty">{t('mcp.empty', locale)}</div>
       ) : (
         <div className="mcp-list">
           {servers.map((s) => (
@@ -106,7 +111,7 @@ export function McpSettings() {
               <button
                 className={`toggle-switch ${s.disabled ? 'off' : 'on'}`}
                 onClick={() => toggleServer(s.name)}
-                title={s.disabled ? 'Enable' : 'Disable'}
+                title={s.disabled ? t('mcp.toggleEnable', locale) : t('mcp.toggleDisable', locale)}
               >
                 {s.disabled ? '○' : '●'}
               </button>
@@ -114,7 +119,7 @@ export function McpSettings() {
                 <div className="mcp-item-name">{s.name}</div>
                 <div className="mcp-item-cmd">{s.url || s.command}</div>
               </div>
-              <button className="mcp-item-remove" onClick={() => removeServer(s.name)} title="Remove">×</button>
+              <button className="mcp-item-remove" onClick={() => removeServer(s.name)} title={t('mcp.remove', locale)}>×</button>
             </div>
           ))}
         </div>

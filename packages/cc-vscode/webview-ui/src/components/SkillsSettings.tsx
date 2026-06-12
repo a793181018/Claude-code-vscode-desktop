@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { restRequest } from '../vscodeApi'
+import { t } from '../i18n'
+import { useChatStore } from '../useChatStore'
 
 interface SkillInfo {
   name: string
@@ -18,6 +20,7 @@ export function SkillsSettings() {
   const [newDesc, setNewDesc] = useState('')
   const [newContent, setNewContent] = useState('')
   const [importPath, setImportPath] = useState('')
+  const locale = useChatStore((s) => s.locale)
 
   useEffect(() => { loadSkills() }, [scope])
 
@@ -52,11 +55,11 @@ export function SkillsSettings() {
         sourcePath: importPath.trim(),
         scope,
       })
-      alert(`Imported ${data.imported} skills`)
+      alert(`${t('skills.imported', locale)} ${data.imported} ${t('skills.title', locale).toLowerCase()}`)
       setImportPath('')
       setShowImport(false)
       loadSkills()
-    } catch (e: any) { alert('Import failed: ' + (e.message || e)) }
+    } catch (e: any) { alert(`${t('skills.importFailed', locale)}: ${e.message || e}`) }
   }
 
   async function toggleSkill(name: string) {
@@ -77,45 +80,49 @@ export function SkillsSettings() {
     <div className="mcp-settings">
       <div className="mcp-header" style={{ flexWrap: 'wrap', gap: 4 }}>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <button className={`mcp-tab ${scope === 'project' ? 'active' : ''}`} onClick={() => setScope('project')} style={{ fontSize: 10, padding: '2px 6px' }}>Project</button>
-          <button className={`mcp-tab ${scope === 'user' ? 'active' : ''}`} onClick={() => setScope('user')} style={{ fontSize: 10, padding: '2px 6px' }}>User</button>
+          <button className={`mcp-tab ${scope === 'project' ? 'active' : ''}`} onClick={() => setScope('project')} style={{ fontSize: 10, padding: '2px 6px' }}>
+            {t('skills.scope.project', locale)}
+          </button>
+          <button className={`mcp-tab ${scope === 'user' ? 'active' : ''}`} onClick={() => setScope('user')} style={{ fontSize: 10, padding: '2px 6px' }}>
+            {t('skills.scope.user', locale)}
+          </button>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           <button className="btn-small" onClick={() => { setShowImport(!showImport); setShowAdd(false) }}>
-            {showImport ? 'Cancel' : 'Import'}
+            {showImport ? t('skills.cancel', locale) : t('skills.import', locale)}
           </button>
           <button className="btn-small" onClick={() => { setShowAdd(!showAdd); setShowImport(false) }}>
-            {showAdd ? 'Cancel' : '+ Add'}
+            {showAdd ? t('skills.cancel', locale) : t('skills.add', locale)}
           </button>
         </div>
       </div>
 
       {showImport && (
         <div className="mcp-add-form">
-          <input className="mcp-input" placeholder="Source path (e.g. /path/to/repo/skills)" value={importPath} onChange={(e) => setImportPath(e.target.value)} />
-          <button className="btn-small btn-primary" onClick={importFromPath}>Import</button>
+          <input className="mcp-input" placeholder={t('skills.importPathPlaceholder', locale)} value={importPath} onChange={(e) => setImportPath(e.target.value)} />
+          <button className="btn-small btn-primary" onClick={importFromPath}>{t('skills.import', locale)}</button>
         </div>
       )}
 
       {showAdd && (
         <div className="mcp-add-form">
-          <input className="mcp-input" placeholder="Skill name (e.g. deploy)" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <input className="mcp-input" placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+          <input className="mcp-input" placeholder={t('skills.namePlaceholder', locale)} value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <input className="mcp-input" placeholder={t('skills.descPlaceholder', locale)} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
           <textarea
             className="mcp-textarea"
-            placeholder="Skill content (markdown body)"
+            placeholder={t('skills.contentPlaceholder', locale)}
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
             rows={6}
           />
-          <button className="btn-small btn-primary" onClick={addSkill}>Add</button>
+          <button className="btn-small btn-primary" onClick={addSkill}>{t('skills.btnAdd', locale)}</button>
         </div>
       )}
 
       {loading ? (
-        <div className="mcp-empty">Loading...</div>
+        <div className="mcp-empty">{t('error.loading', locale)}</div>
       ) : skills.length === 0 ? (
-        <div className="mcp-empty">No skills configured</div>
+        <div className="mcp-empty">{t('skills.empty', locale)}</div>
       ) : (
         <div className="mcp-list">
           {skills.map((s) => (
@@ -123,7 +130,7 @@ export function SkillsSettings() {
               <button
                 className={`toggle-switch ${s.enabled ? 'on' : 'off'}`}
                 onClick={() => toggleSkill(s.name)}
-                title={s.enabled ? 'Disable' : 'Enable'}
+                title={s.enabled ? t('skills.toggleDisable', locale) : t('skills.toggleEnable', locale)}
               >
                 {s.enabled ? '●' : '○'}
               </button>
@@ -131,7 +138,7 @@ export function SkillsSettings() {
                 <div className="mcp-item-name">{s.name}</div>
                 <div className="mcp-item-cmd">{s.description}</div>
               </div>
-              <button className="mcp-item-remove" onClick={() => removeSkill(s.name)} title="Remove">×</button>
+              <button className="mcp-item-remove" onClick={() => removeSkill(s.name)} title={t('skills.remove', locale)}>×</button>
             </div>
           ))}
         </div>

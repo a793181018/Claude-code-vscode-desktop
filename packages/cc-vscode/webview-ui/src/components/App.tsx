@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useChatStore } from '../useChatStore'
 import { vscodeApi } from '../vscodeApi'
+import { t } from '../i18n'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { PermissionDialog } from './PermissionDialog'
@@ -30,6 +31,7 @@ export function App() {
     sessions,
     statusVerb,
     bridgeUrl,
+    locale,
   } = useChatStore()
 
   const [showSettings, setShowSettings] = useState(false)
@@ -66,28 +68,28 @@ export function App() {
       <div className="main-area">
         <div className="status-bar">
           <span className="status-left">
-            {connectionState === 'disconnected' && 'Disconnected'}
-            {connectionState === 'connecting' && 'Connecting...'}
+            {connectionState === 'disconnected' && t('status.disconnected', locale)}
+            {connectionState === 'connecting' && t('status.connecting', locale)}
             {connectionState === 'connected' && (
               <>
-                {sessionId ? `Session: ${sessionId.substring(0, 8)}` : 'No session'}
+                {sessionId ? `${t('status.session', locale)}: ${sessionId.substring(0, 8)}` : t('status.noSession', locale)}
                 {statusVerb && ` — ${statusVerb}`}
               </>
             )}
           </span>
           <span className="status-right">
-            <button className="settings-gear-btn" onClick={() => setShowSettings(true)} title="Settings">⚙</button>
-            {bridgeUrl ? `Bridge: ${bridgeUrl}` : 'No bridge'}
+            <button className="settings-gear-btn" onClick={() => setShowSettings(true)} title={t('settings.gear', locale)}>⚙</button>
+            {bridgeUrl ? `${t('status.bridge', locale)}: ${bridgeUrl}` : t('status.noBridge', locale)}
           </span>
         </div>
         <SettingsBar />
 
         {!sessionId ? (
           <div className="empty-state">
-            <h2>Claude Code</h2>
-            <p>Select a session or create a new one to start.</p>
+            <h2>{t('empty.title', locale)}</h2>
+            <p>{t('empty.desc', locale)}</p>
             <button className="btn-primary" onClick={createSession}>
-              New Session
+              {t('empty.newBtn', locale)}
             </button>
           </div>
         ) : (
@@ -122,11 +124,11 @@ export function App() {
             <div className="mcp-overlay-content" onClick={(e) => e.stopPropagation()}>
               <div className="mcp-overlay-header">
                 <div className="mcp-overlay-tabs">
-                  <button className={`mcp-tab ${settingsTab === 'mcp' ? 'active' : ''}`} onClick={() => setSettingsTab('mcp')}>MCP</button>
-                  <button className={`mcp-tab ${settingsTab === 'agents' ? 'active' : ''}`} onClick={() => setSettingsTab('agents')}>Agents</button>
-                  <button className={`mcp-tab ${settingsTab === 'skills' ? 'active' : ''}`} onClick={() => setSettingsTab('skills')}>Skills</button>
+                  <button className={`mcp-tab ${settingsTab === 'mcp' ? 'active' : ''}`} onClick={() => setSettingsTab('mcp')}>{t('settings.mcp', locale)}</button>
+                  <button className={`mcp-tab ${settingsTab === 'agents' ? 'active' : ''}`} onClick={() => setSettingsTab('agents')}>{t('settings.agents', locale)}</button>
+                  <button className={`mcp-tab ${settingsTab === 'skills' ? 'active' : ''}`} onClick={() => setSettingsTab('skills')}>{t('settings.skills', locale)}</button>
                 </div>
-                <button className="btn-small" onClick={() => setShowSettings(false)}>Close</button>
+                <button className="btn-small" onClick={() => setShowSettings(false)}>{t('settings.close', locale)}</button>
               </div>
               {settingsTab === 'mcp' ? <McpSettings /> : settingsTab === 'agents' ? <AgentsSettings /> : <SkillsSettings />}
             </div>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { restRequest } from '../vscodeApi'
+import { t } from '../i18n'
+import { useChatStore } from '../useChatStore'
 
 interface AgentInfo {
   name: string
@@ -18,6 +20,7 @@ export function AgentsSettings() {
   const [newDesc, setNewDesc] = useState('')
   const [newPrompt, setNewPrompt] = useState('')
   const [newTools, setNewTools] = useState<string>('')
+  const locale = useChatStore((s) => s.locale)
 
   useEffect(() => { loadAgents() }, [])
 
@@ -55,27 +58,27 @@ export function AgentsSettings() {
   return (
     <div className="mcp-settings">
       <div className="mcp-header">
-        <h3>Agents</h3>
+        <h3>{t('agents.title', locale)}</h3>
         <button className="btn-small" onClick={() => setShowAdd(!showAdd)}>
-          {showAdd ? 'Cancel' : '+ Add'}
+          {showAdd ? t('agents.cancel', locale) : t('agents.add', locale)}
         </button>
       </div>
 
       {showAdd && (
         <div className="mcp-add-form">
-          <input className="mcp-input" placeholder="Agent name (e.g. code-reviewer)" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <input className="mcp-input" placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
-          <textarea className="mcp-textarea" placeholder="System prompt" value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} rows={4} />
-          <input className="mcp-input" placeholder="Tools (comma-separated, e.g. Read, Grep, Bash)" value={newTools} onChange={(e) => setNewTools(e.target.value)} />
-          <div style={{ fontSize: 10, opacity: 0.5 }}>Available: {TOOL_OPTIONS.join(', ')}</div>
-          <button className="btn-small btn-primary" onClick={addAgent}>Add</button>
+          <input className="mcp-input" placeholder={t('agents.namePlaceholder', locale)} value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <input className="mcp-input" placeholder={t('agents.descPlaceholder', locale)} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+          <textarea className="mcp-textarea" placeholder={t('agents.promptPlaceholder', locale)} value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} rows={4} />
+          <input className="mcp-input" placeholder={t('agents.toolsPlaceholder', locale)} value={newTools} onChange={(e) => setNewTools(e.target.value)} />
+          <div style={{ fontSize: 10, opacity: 0.5 }}>{t('agents.toolsHint', locale)}: {TOOL_OPTIONS.join(', ')}</div>
+          <button className="btn-small btn-primary" onClick={addAgent}>{t('agents.btnAdd', locale)}</button>
         </div>
       )}
 
       {loading ? (
-        <div className="mcp-empty">Loading...</div>
+        <div className="mcp-empty">{t('error.loading', locale)}</div>
       ) : agents.length === 0 ? (
-        <div className="mcp-empty">No agents configured</div>
+        <div className="mcp-empty">{t('agents.empty', locale)}</div>
       ) : (
         <div className="mcp-list">
           {agents.map((a) => (
@@ -84,7 +87,7 @@ export function AgentsSettings() {
                 <div className="mcp-item-name">{a.name}</div>
                 <div className="mcp-item-cmd">{a.description}</div>
               </div>
-              <button className="mcp-item-remove" onClick={() => removeAgent(a.name)} title="Remove">×</button>
+              <button className="mcp-item-remove" onClick={() => removeAgent(a.name)} title={t('agents.remove', locale)}>×</button>
             </div>
           ))}
         </div>
