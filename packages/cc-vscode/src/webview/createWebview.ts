@@ -60,10 +60,12 @@ export function createChatWebview(
   )
 
   // Send initial config to webview
+  const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || ''
   panel.webview.postMessage({
     type: 'init',
     bridgeUrl: bridgeManager.getBaseUrl(),
     newSession: options.newSession || false,
+    workspaceDir,
   })
 
   return panel

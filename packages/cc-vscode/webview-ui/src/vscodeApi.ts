@@ -21,6 +21,7 @@ type StatusHandler = (status: { bridgeUrl: string; newSession: boolean }) => voi
 let messageHandlers = new Set<MessageHandler>()
 let statusHandler: StatusHandler | null = null
 let bridgeUrl = 'http://127.0.0.1:0'
+let workspaceDir = ''
 let connected = false
 let lastInitMsg: { bridgeUrl: string; newSession: boolean } | null = null
 
@@ -30,6 +31,7 @@ window.addEventListener('message', (event) => {
 
   if (msg.type === 'init') {
     bridgeUrl = msg.bridgeUrl
+    workspaceDir = msg.workspaceDir || ''
     connected = true
     lastInitMsg = msg
     statusHandler?.(msg)
@@ -122,4 +124,8 @@ export function getBridgeUrl(): string {
 
 export function isConnected(): boolean {
   return connected
+}
+
+export function getWorkspaceDir(): string {
+  return workspaceDir
 }

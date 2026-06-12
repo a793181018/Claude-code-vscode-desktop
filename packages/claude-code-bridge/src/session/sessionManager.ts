@@ -73,6 +73,7 @@ export class SessionManager {
     sessionId?: string
     permissionMode?: string
     model?: string
+    title?: string
   }): Promise<SessionInfo> {
     const sessionId = options?.sessionId || randomUUID()
     const streamState = createStreamState()
@@ -130,7 +131,8 @@ export class SessionManager {
 
     cliProcess.start(cliOptions)
 
-    const info: SessionInfo = { sessionId, workDir, createdAt: Date.now() }
+    const title = options?.title || undefined
+    const info: SessionInfo = { sessionId, workDir, createdAt: Date.now(), title }
     const state: SessionState = {
       info,
       streamState,
@@ -181,7 +183,7 @@ export class SessionManager {
     this.sessions.set(sessionId, state)
 
     sessionStore.saveSessionMeta({
-      sessionId, workDir, title: undefined,
+      sessionId, workDir, title,
       createdAt: info.createdAt, lastActiveAt: Date.now(), messageCount: 0,
     })
 

@@ -76,6 +76,7 @@ export function createApiRouter(sessionManager: SessionManager) {
         const info = await sessionManager.createSession(workDir, {
           permissionMode: userSettings.permissionMode,
           model: userSettings.model,
+          title: req.body?.title?.trim() || undefined,
         })
         res.status(201).json(info)
       } catch (err) {

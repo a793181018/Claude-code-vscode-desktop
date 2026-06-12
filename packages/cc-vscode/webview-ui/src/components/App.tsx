@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useChatStore } from '../useChatStore'
-import { vscodeApi } from '../vscodeApi'
+import { vscodeApi, getWorkspaceDir } from '../vscodeApi'
 import { t } from '../i18n'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
@@ -10,6 +10,7 @@ import { SettingsBar } from './SettingsBar'
 import { McpSettings } from './McpSettings'
 import { SkillsSettings } from './SkillsSettings'
 import { AgentsSettings } from './AgentsSettings'
+import { NamePrompt } from './NamePrompt'
 import type { ChatState } from '../types'
 
 export function App() {
@@ -38,6 +39,22 @@ export function App() {
   const [settingsTab, setSettingsTab] = useState<'mcp' | 'agents' | 'skills'>('mcp')
   const initialized = useRef(false)
 
+  // Name prompt state
+  const [namePrompt, setNamePrompt] = useState<{
+    visible: boolean
+    mode: 'new' | 'fork'
+    forkIndex?: number
+  }>({ visible: false, mode: 'new' })
+
+  function handleNameConfirm(name: string) {
+    setNamePrompt({ visible: false, mode: 'new' })
+    if (namePrompt.mode === 'new') {
+      useChatStore.getState().createSession(name || undefined)
+    } else if (namePrompt.forkIndex !== undefined) {
+      useChatStore.getState().forkSession(namePrompt.forkIndex, name || undefined)
+    }
+  }
+
   useEffect(() => {
     if (!initialized.current) {
       initialized.current = true
@@ -56,13 +73,19 @@ export function App() {
     }
   }, [init])
 
+  // Filter sessions to only show those matching the current workspace
+  const currentWorkspace = getWorkspaceDir()
+  const filteredSessions = currentWorkspace
+    ? sessions.filter((s: any) => s.workDir && s.workDir === currentWorkspace)
+    : sessions
+
   return (
     <div className="app-container">
       <Sidebar
-        sessions={sessions}
+        sessions={filteredSessions}
         activeSessionId={sessionId}
         onSelect={connectToSession}
-        onNew={createSession}
+        onNew={() => setNamePrompt({ visible: true, mode: 'new' })}
         onDelete={deleteSession}
       />
       <div className="main-area">
@@ -88,7 +111,7 @@ export function App() {
           <div className="empty-state">
             <h2>{t('empty.title', locale)}</h2>
             <p>{t('empty.desc', locale)}</p>
-            <button className="btn-primary" onClick={createSession}>
+            <button className="btn-primary" onClick={() => setNamePrompt({ visible: true, mode: 'new' })}>
               {t('empty.newBtn', locale)}
             </button>
           </div>
@@ -98,7 +121,7 @@ export function App() {
               messages={messages}
               streamingText={streamingText}
               chatState={chatState}
-              onFork={(idx) => useChatStore.getState().forkSession(idx)}
+              onFork={(idx) => setNamePrompt({ visible: true, mode: 'fork', forkIndex: idx })}
               onRewind={(idx) => useChatStore.getState().rewindSession(idx)}
             />
             <ChatInput
@@ -116,6 +139,15 @@ export function App() {
           <PermissionDialog
             permission={pendingPermission}
             onRespond={respondToPermission}
+          />
+        )}
+
+        {namePrompt.visible && (
+          <NamePrompt
+            mode={namePrompt.mode}
+            locale={locale}
+            onConfirm={handleNameConfirm}
+            onCancel={() => setNamePrompt({ visible: false, mode: 'new' })}
           />
         )}
 

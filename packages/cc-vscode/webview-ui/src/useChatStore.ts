@@ -154,9 +154,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       .catch(() => { /* history optional */ })
   },
 
-  createSession: async () => {
+  createSession: async (title?: string) => {
     try {
-      const data: any = await restRequest('/api/sessions', 'POST', { workDir: '.' })
+      const data: any = await restRequest('/api/sessions', 'POST', {
+        workDir: '.',
+        ...(title ? { title } : {}),
+      })
       if (data.sessionId) {
         get().connectToSession(data.sessionId)
       }
@@ -306,14 +309,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     })
   },
 
-  forkSession: async (messageIndex: number) => {
+  forkSession: async (messageIndex: number, title?: string) => {
     const state = get()
     if (!state.sessionId) return
     try {
       const data: any = await restRequest(
         `/api/sessions/${state.sessionId}/branch`,
         'POST',
-        { targetMessageIndex: messageIndex }
+        { targetMessageIndex: messageIndex, ...(title ? { title } : {}) }
       )
       if (data.sessionId) {
         get().connectToSession(data.sessionId)

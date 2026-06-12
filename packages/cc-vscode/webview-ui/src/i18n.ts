@@ -126,6 +126,14 @@ const STRINGS: Record<string, Record<string, string>> = {
   'error.loading': { en: 'Loading...', zh: '加载中...' },
   'error.bridgeFail': { en: 'Bridge server is not running', zh: 'Bridge 服务未运行' },
   'error.createSession': { en: 'Failed to create session', zh: '创建会话失败' },
+
+  // ─── Name Prompt ─────────────────────────────────────────
+  'name.newSession': { en: 'New Session', zh: '新建会话' },
+  'name.forkSession': { en: 'Fork Session', zh: '分叉会话' },
+  'name.label': { en: 'Session name', zh: '会话名称' },
+  'name.placeholder': { en: 'Enter a name (optional)', zh: '输入名称（可选）' },
+  'name.create': { en: 'Create', zh: '创建' },
+  'name.cancel': { en: 'Cancel', zh: '取消' },
 }
 
 export function t(key: string, locale?: string): string {

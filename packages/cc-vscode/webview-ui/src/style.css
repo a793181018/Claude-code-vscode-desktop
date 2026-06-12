@@ -87,17 +87,28 @@ body {
 .sidebar-item:hover { background: rgba(255,255,255,0.05); }
 .sidebar-item.active { background: rgba(255,255,255,0.1); }
 
+.sidebar-item-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
 .sidebar-item-title {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
+  min-width: 0;
 }
 
-.sidebar-item-meta {
-  opacity: 0.5;
-  font-size: 10px;
+.sidebar-item-id {
+  font-size: 9px;
+  opacity: 0.35;
+  font-family: var(--vscode-editor-font-family, monospace);
+  flex-shrink: 0;
 }
 
 .sidebar-item-delete {
@@ -727,6 +738,11 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.name-prompt-content {
+  width: 360px;
+  padding: 16px 20px;
 }
 
 .mcp-overlay-header {

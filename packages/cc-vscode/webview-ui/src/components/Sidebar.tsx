@@ -1,3 +1,6 @@
+import { t } from '../i18n'
+import { useChatStore } from '../useChatStore'
+
 interface SessionInfo {
   sessionId: string
   title: string
@@ -14,17 +17,19 @@ interface Props {
 }
 
 export function Sidebar({ sessions, activeSessionId, onSelect, onNew, onDelete }: Props) {
+  const locale = useChatStore((s) => s.locale)
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h3>Sessions</h3>
-        <button className="btn-new" onClick={onNew} title="New Session">
+        <h3>{t('sidebar.title', locale)}</h3>
+        <button className="btn-new" onClick={onNew} title={t('sidebar.new', locale)}>
           +
         </button>
       </div>
       <div className="sidebar-list">
         {sessions.length === 0 && (
-          <div className="sidebar-empty">No sessions yet</div>
+          <div className="sidebar-empty">{t('sidebar.empty', locale)}</div>
         )}
         {sessions.map((s) => (
           <div
@@ -32,9 +37,9 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNew, onDelete }
             className={`sidebar-item ${s.sessionId === activeSessionId ? 'active' : ''}`}
             onClick={() => onSelect(s.sessionId)}
           >
-            <div className="sidebar-item-title">{s.title}</div>
-            <div className="sidebar-item-meta">
-              {s.workDir && <span className="sidebar-item-dir">{shortPath(s.workDir)}</span>}
+            <div className="sidebar-item-main">
+              <div className="sidebar-item-title">{s.title}</div>
+              <span className="sidebar-item-id">{s.sessionId.substring(0, 8)}</span>
             </div>
             <button
               className="sidebar-item-delete"
@@ -42,7 +47,7 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNew, onDelete }
                 e.stopPropagation()
                 onDelete(s.sessionId)
               }}
-              title="Delete"
+              title={locale === 'zh' ? '删除' : 'Delete'}
             >
               ×
             </button>
@@ -51,9 +56,4 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNew, onDelete }
       </div>
     </div>
   )
-}
-
-function shortPath(p: string): string {
-  const parts = p.split('/')
-  return parts.slice(-2).join('/') || p
 }
