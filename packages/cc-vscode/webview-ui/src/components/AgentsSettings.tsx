@@ -8,6 +8,7 @@ interface AgentInfo {
   description: string
   tools: string[]
   model: string
+  source?: string
 }
 
 const TOOL_OPTIONS = ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'Agent']
@@ -84,7 +85,10 @@ export function AgentsSettings() {
           {agents.map((a) => (
             <div key={a.name} className="mcp-item">
               <div className="mcp-item-info">
-                <div className="mcp-item-name">{a.name}</div>
+                <div className="mcp-item-name">
+                  {a.name}
+                  {a.source === 'builtin' && <span className="slash-source" style={{ marginLeft: 6 }}>built-in</span>}
+                </div>
                 <div className="mcp-item-cmd">{a.description}</div>
               </div>
               <button className="mcp-item-remove" onClick={() => removeAgent(a.name)} title={t('agents.remove', locale)}>×</button>

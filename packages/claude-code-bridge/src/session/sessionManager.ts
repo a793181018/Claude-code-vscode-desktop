@@ -400,9 +400,23 @@ function resolveSkillCommand(content: string, workDir: string): string {
 
   // Skip built-in commands
   const builtins = new Set([
-    'help', 'clear', 'compact', 'cost', 'review', 'security-review',
-    'context', 'doctor', 'pr-comments', 'release-notes', 'init',
-    'login', 'logout', 'status', 'add-dir', 'memory',
+    'help', 'clear', 'exit', 'quit', 'status', 'doctor', 'login', 'logout',
+    'btw', 'compact', 'context', 'export', 'rename', 'resume', 'continue', 'branch',
+    'rewind', 'checkpoint', 'add-dir', 'cd', 'copy', 'recap', 'goal', 'fast',
+    'review', 'security-review', 'diff', 'code-review', 'pr-comments', 'release-notes',
+    'model', 'effort', 'plan',
+    'usage', 'stats', 'cost',
+    'config', 'settings', 'permissions', 'allowed-tools', 'memory', 'init',
+    'hooks', 'ide',
+    'agents', 'mcp', 'skills', 'tasks', 'bashes', 'workflows',
+    'plugin', 'reload-plugins', 'reload-skills',
+    'feedback', 'bug', 'share',
+    'batch', 'claude-api', 'debug', 'deep-research', 'fewer-permission-prompts',
+    'loop', 'proactive', 'run', 'run-skill-generator', 'verify', 'simplify',
+    'schedule', 'routines', 'insights', 'team-onboarding', 'powerup',
+    'install-github-app', 'install-slack-app', 'web-setup',
+    'setup-bedrock', 'setup-vertex',
+    'fork', 'voice', 'sandbox', 'heapdump',
   ])
   // Remove leading /
   const skillName = cmd.startsWith('/') ? cmd.substring(1) : cmd

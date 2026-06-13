@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChatState } from '../types'
 import { restRequest } from '../vscodeApi'
+import { t } from '../i18n'
+import { useChatStore } from '../useChatStore'
 
 interface SlashCommand {
   name: string
@@ -22,9 +24,18 @@ export function ChatInput({ chatState, error, onSend, onStop, onClear, sessionId
   const [showCommands, setShowCommands] = useState(false)
   const [commands, setCommands] = useState<SlashCommand[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const locale = useChatStore((s) => s.locale)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const isRunning = chatState !== 'idle' && chatState !== 'permission_pending'
+
+  function getDesc(cmd: SlashCommand): string {
+    if (cmd.source === 'builtin') {
+      const translated = t(`slash.${cmd.name}`, locale)
+      return translated !== `slash.${cmd.name}` ? translated : cmd.description
+    }
+    return cmd.description
+  }
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -168,7 +179,7 @@ export function ChatInput({ chatState, error, onSend, onStop, onClear, sessionId
               onMouseEnter={() => setSelectedIndex(i)}
             >
               <span className="slash-cmd">/{c.name}</span>
-              <span className="slash-desc">{c.description}</span>
+              <span className="slash-desc">{getDesc(c)}</span>
               {sourceLabel(c.source) && (
                 <span className="slash-source">{sourceLabel(c.source)}</span>
               )}

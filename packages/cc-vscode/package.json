@@ -1,7 +1,7 @@
 {
   "name": "cc-vscode",
   "displayName": "Claude Code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI-powered coding assistant powered by Claude Code",
   "publisher": "cc-vscode",
   "engines": {
